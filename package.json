@@ -1,0 +1,34 @@
+{
+  "name": "kata-wemanity",
+  "version": "1.0.0",
+  "description": "an images gallery app",
+  "main": "wekata.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jockehewh/kata-wemanity.git"
+  },
+  "keywords": [
+    "images",
+    "collection",
+    "online",
+    "collection",
+    "images",
+    "collection",
+    "sharing",
+    "images",
+    "bank"
+  ],
+  "author": "Xavier Bélénus",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jockehewh/kata-wemanity/issues"
+  },
+  "homepage": "https://github.com/jockehewh/kata-wemanity#readme",
+  "dependencies": {
+    "koa": "^2.7.0",
+    "koa-socket-2": "^1.0.17"
+  }
+}
