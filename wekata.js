@@ -31,6 +31,7 @@ wekata.use(ctx=>{
       ctx.body = fs.createReadStream('./images/' + ctx.url, {autoClose: true})
     }
   }
+  //VISITER UN PROFILE
   if(profileCheck.test(ctx.url)){
     let profileRequest = profilCheck.exec(ctx.url)[1]
     console.log(profileRequest)
@@ -41,11 +42,17 @@ wekata.use(ctx=>{
     })
     currentUserStream.on('end', ()=>{
       currentUserList = jsp(currentUserList)
+      ctx.type = "application/json"
+      currentUserList.forEach(user =>{
+        if(user.firstName+'-'+user.lastName === profileRequest){
+          ctx.body = user
+        }
+      })
     })
   }
 })
 
-kataSocket.on('connexion', (socket)=>{
+kataSocket.on('connection', (socket)=>{
   console.log('socket connected')
 })
 
@@ -64,10 +71,25 @@ kataSocket.on('create-profile', (ctx)=>{
   })
   currentUserStream.on('end', ()=>{
     currentUserList = jsp(currentUserList)
-    currentUserList.push(profileData)
-    const updateList = fs.createWriteStream('./userslist.weson', {encoding: 'utf8'})
-    updateList.write(jss(currentUserList))
-    updateList.end()
+    let y = 0
+    for(let i = 0; i<=currentUserList.length; i++){
+      if( currentUserList[i] !== undefined && currentUserList[i].name === profileData.name ){
+        y++
+      }
+    }
+    if(y !== 0){
+      console.log('le profil extist')
+      kataSocket.emit('error-msg', 'le profile existe')
+    }else{
+      currentUserList.push(profileData)
+      const updateList = fs.createWriteStream('./userslist.weson', {encoding: 'utf8'})
+      updateList.write(jss(currentUserList))
+      updateList.end()
+      let fullName = profileData.firstName+'-'+profileData.lastName
+      //let profilPic = 'avatar.'+ profileData.imgType.replace('image/', "")
+      console.log(fullName/* , profilPic */)
+      //saveAndCreate(fullName, {name: profilPic, buffer: profileData.profilPic})
+    }
   })
 })
 kataSocket.on('add-image', ctx => {
@@ -82,7 +104,7 @@ kataSocket.on('add-image', ctx => {
 
 const saveAndCreate = (name, image)=>{
   if(fs.existsSync('./images/' + name)){
-    const newFile = fs.createWriteStream('./images/'+name+'/' + image.name, {encoding: 'utf8'})
+    const newFile = fs.createWriteStream('./images/'+name+'/' + image.name)
     newFile.write(image.buffer)
     newFile.end()
   }else{
@@ -98,18 +120,13 @@ const readDirCreateURLs = (name)=>{
     })
     return profileImagesURLS
   }else{
+    //kataSocket.emit('error-msg')?
     return {profileError: "this profile does not exist."}
   }
 }
 
 //saveAndCreate('xavier-bélénus', 'file1')
-saveAndCreate('xavier-bélénus', 'file1fgh')
-saveAndCreate('xavier-bélénus', 'file1trt')
-saveAndCreate('xavier-bélénus', 'file1az55e')
-saveAndCreate('xavier-bélénus', 'file1aze')
-let theUrls = readDirCreateURLs('xavier-bélénus')
 
-console.log(theUrls)
 
 kataSocket.attach(wekata)
 wekata.listen(2019, ()=>{console.log('listening on port 2019')})
