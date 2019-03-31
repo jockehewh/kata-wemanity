@@ -2,8 +2,11 @@ const jss = JSON.stringify
 const jsp = JSON.parse
 const x = m
 const mews = io('ws://localhost:2019/katasocket')
+if(localStorage.profile === undefined){
+  localStorage.profile = false
+}
 const state = {
-  hasProfile: false,
+  hasProfile: localStorage.profile,
 }
 /* profileData = {
     firstName: "name",
@@ -30,6 +33,7 @@ const checkAndCreateProfile = (form)=>{
     }
     mews.emit('create-profile', newProfile)
     localStorage.profile = state.hasProfile = "true"
+    localStorage.profileInfo = jss({firstName:newProfile.firstName, lastName: newProfile.lastName, profilPic: './'+newProfile.firstName+'-'+newProfile.lastName+'/avatar.'+newProfile.imgType})
   }
 }
 
@@ -63,11 +67,44 @@ const hasNoProfile = {
   }
 }
 
-const hasProfile = {}
+const hasProfile = {
+  view: ()=>{
+    return x('div.profile', null, [
+      x(profileHeader)
+    ])
+  }
+}
 
-const profileHeader = {}
+const profileHeader = {
+  oninit: ()=>{
+    state.profileData = jsp(localStorage.profileInfo)
+  },
+  view: ()=>{
+    return x('div.profile-header', null, [
+      x('p', null, [
+        x('span', null, state.profileData.firstName+ ' '),
+        x('span', null, state.profileData.lastName),
+      ]),
+      x('img.profile-thumbnail', {src: state.profileData.profilPic, display: 'block'}),
+      x(profileRequest)
+    ])
+  }
+}
 
-const profileRequest = {}
+const profileRequest = {
+  oninit: ()=>{
+
+  },
+  view: ()=>{
+    return x('div.profile-request', null, [
+      x('form', null, [
+        x('label', 'visit another profile: '),
+        x('input[type=text]', {name: 'requested', class:'requested'}),
+        x('input[type=submit]', null, 'Create profile')
+      ])
+    ])
+  }
+}
 
 const profileCollection = {}
 

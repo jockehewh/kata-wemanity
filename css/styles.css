@@ -21,3 +21,19 @@
   height: 150px;
   width: 150px;
 }
+.profile-thumbnail{
+  display: block;
+  height: 150px;
+  width: 150px;
+}
+.profile-header{
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  align-items: center;
+  grid-gap: 20px;
+  text-align: center;
+  height: 200px;
+}
+.profile-request{
+  grid-column: 7/8;
+}
