@@ -1,1 +1,23 @@
 *{margin: 0; padding: 0; user-select: none;}
+.welcome{
+  text-align: center;
+}
+.welcome h2, .welcome p{
+  margin-bottom: 20px;
+}
+.create-profile{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.create-profile button{
+  width: 50%;
+}
+.create-profile input{
+  margin-bottom: 10px;
+}
+.profile-thumb{
+  display: none;
+  height: 150px;
+  width: 150px;
+}

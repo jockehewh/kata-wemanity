@@ -57,13 +57,17 @@ kataSocket.on('connection', (ctx)=>{
 })
 
 kataSocket.on('create-profile', (ctx)=>{
-  let profileData = jsp(ctx.data)
+  let profileData = ctx.data
   /* profileData = {
     firstName: "name",
     lastName: "lastname",
     profilPic: "buffer",
     imgType: ""
   } */
+  let user = {
+    firstName: profileData.firstName,
+    lastName: profileData.lastName
+  }
   let currentUserList = ""
   let currentUserStream = fs.createReadStream('./userslist.weson', {encoding: 'utf8'})
   currentUserStream.on('data', data=>{
@@ -73,7 +77,7 @@ kataSocket.on('create-profile', (ctx)=>{
     currentUserList = jsp(currentUserList)
     let y = 0
     for(let i = 0; i<=currentUserList.length; i++){
-      if( currentUserList[i] !== undefined && currentUserList[i].name === profileData.name ){
+      if( currentUserList[i] !== undefined && currentUserList[i].lastName === profileData.lastName ){
         y++
       }
     }
@@ -81,14 +85,13 @@ kataSocket.on('create-profile', (ctx)=>{
       console.log('le profil extist')
       ctx.socket.emit('error-msg', 'le profile existe')
     }else{
-      currentUserList.push(profileData)
+      currentUserList.push(user)
       const updateList = fs.createWriteStream('./userslist.weson', {encoding: 'utf8'})
       updateList.write(jss(currentUserList))
       updateList.end()
       let fullName = profileData.firstName+'-'+profileData.lastName
-      //let profilPic = 'avatar.'+ profileData.imgType.replace('image/', "")
-      console.log(fullName/* , profilPic */)
-      //saveAndCreate(fullName, {name: profilPic, buffer: profileData.profilPic})
+      let profilPic = 'avatar.'+ profileData.imgType
+      saveAndCreate(fullName, {name: profilPic, buffer: profileData.profilPic})
     }
   })
 })
@@ -104,7 +107,7 @@ kataSocket.on('add-image', ctx => {
 
 const saveAndCreate = (name, image)=>{
   if(fs.existsSync('./images/' + name)){
-    const newFile = fs.createWriteStream('./images/'+name+'/' + image.name)
+    const newFile = fs.createWriteStream('./images/'+name+'/' + image.name, {encoding: "binary"})
     newFile.write(image.buffer)
     newFile.end()
   }else{
@@ -124,8 +127,6 @@ const readDirCreateURLs = (name)=>{
     return {profileError: "this profile does not exist."}
   }
 }
-
-//saveAndCreate('xavier-bélénus', 'file1')
 
 
 kataSocket.attach(wekata)
