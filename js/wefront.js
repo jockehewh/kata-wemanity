@@ -21,7 +21,6 @@ const state = {
   } */
 
 const checkAndCreateProfile = (form)=>{
-  console.log(form.firstname.value, form.lastname.value, form.profilePic.files)
   if(form.firstname.value === undefined || form.lastname.value === undefined || form.profilePic.files.length === 0){
     console.log('missing data')
   }else{
@@ -32,7 +31,10 @@ const checkAndCreateProfile = (form)=>{
       imgType: form.profilePic.files[0].type.replace('image/', '')
     }
     mews.emit('create-profile', newProfile)
-    localStorage.profile = state.hasProfile = "true"
+    setTimeout(function(){
+      localStorage.profile = state.hasProfile = "true"
+      x.redraw()
+    }, 1000)
     localStorage.profileInfo = jss({firstName:newProfile.firstName, lastName: newProfile.lastName, profilPic: './'+newProfile.firstName+'-'+newProfile.lastName+'/avatar.'+newProfile.imgType})
   }
 }
@@ -44,7 +46,6 @@ const hasNoProfile = {
       x('p', null, 'Create your profile to continue:'),
       x('form.create-profile', {onsubmit: (e)=>{
         e.preventDefault()
-        console.log(e.target.firstname)
         checkAndCreateProfile(e.target)
       }}, [
         x('label', 'first name:'),
@@ -68,9 +69,12 @@ const hasNoProfile = {
 }
 
 const hasProfile = {
+  oninit: ()=>{
+  },
   view: ()=>{
     return x('div.profile', null, [
-      x(profileHeader)
+      x(profileHeader),
+      state.myCollection !== undefined ? x(profileCollection) : null
     ])
   }
 }
@@ -78,6 +82,21 @@ const hasProfile = {
 const profileHeader = {
   oninit: ()=>{
     state.profileData = jsp(localStorage.profileInfo)
+    x.request({
+      method: 'GET',
+      url: '/fetch-profiles',
+      withCredentials: true
+    }).then(result =>{
+      state.existingProfiles = result
+    })
+    x.request({
+      method: 'GET',
+      url: '/profile/'+state.profileData.firstName+"-"+state.profileData.lastName,
+      withCredentials: true
+    }).then(result =>{
+      state.myCollection = result
+      x.redraw()
+    })
   },
   view: ()=>{
     return x('div.profile-header', null, [
@@ -86,27 +105,63 @@ const profileHeader = {
         x('span', null, state.profileData.lastName),
       ]),
       x('img.profile-thumbnail', {src: state.profileData.profilPic, display: 'block'}),
-      x(profileRequest)
+      x(addImageToCollection),
+      state.existingProfiles !== undefined ? x(profileRequest) : null
     ])
+  }
+}
+
+const addImageToCollection = {
+  view: ()=>{
+    return x('input[type=file]', {accept: 'image/*', multiple: true, onchange: (e)=>{
+      if(e.target.files.length !== 0){
+        let i = e.target.files.length
+        for(img of e.target.files){
+          mews.emit('add-image', {fullname: state.profileData.firstName+"-"+state.profileData.lastName, name: img.name, buffer: img})
+          i--
+          if(i === 1){
+            window.location.reload()
+          }
+        }
+        x.request({
+        method: 'GET',
+        url: '/profile/'+state.profileData.firstName+"-"+state.profileData.lastName,
+        withCredentials: true
+      }).then(result =>{
+        state.myCollection = result
+      })
+      }
+    }})
   }
 }
 
 const profileRequest = {
   oninit: ()=>{
-
   },
   view: ()=>{
     return x('div.profile-request', null, [
       x('form', null, [
         x('label', 'visit another profile: '),
-        x('input[type=text]', {name: 'requested', class:'requested'}),
+        x('select', {name: 'requested', class:'requested'}, [
+          state.existingProfiles.map(profile=>{
+            return x('option', {value: profile.firstName+'-'+profile.lastName}, profile.firstName+'-'+profile.lastName)
+          })
+        ]),
         x('input[type=submit]', null, 'Create profile')
       ])
     ])
   }
 }
 
-const profileCollection = {}
+const profileCollection = {
+  view:()=>{
+    return x('div.my-collection', null, [
+      state.myCollection.map(img=>{
+        return x('img', {src: img, class:'from-collection'})
+      })
+    ])
+  }
+}
 
 let theHomepage = {
   oninit: ()=>{

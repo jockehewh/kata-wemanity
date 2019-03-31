@@ -3,11 +3,20 @@ const IO = require('koa-socket-2')
 const fs = require('fs')
 const jsp = JSON.parse
 const jss = JSON.stringify
-const profileCheck =/\/profil\/([a-zA-Z]{1,}-[a-zA-Z]{1,})/
-const profilPicCheck = /\/profil\/([a-zA-Z]{1,}-[a-zA-Z]{1,})\/([a-zA-Z0-9-]{1,}\.jpeg|png|jpg|PNG)/
+const profileCheck =/\/profile\/([a-zA-Z]{1,}-[a-zA-Z]{1,})/
+const profilPicCheck = /\/profile\/([a-zA-Z]{1,}-[a-zA-Z]{1,})\/([a-zA-Z0-9-]{1,}\.jpeg|png|jpg|PNG)/
 const kataSocket = new IO({
     namespace: 'katasocket'
 })
+let profiles = ''
+    let profilesStream = fs.createReadStream('./userslist.weson', {autoClose: true})
+    profilesStream.on('data', data =>{
+      profiles += data
+    })
+    profilesStream.on('end', ()=>{
+      console.log(profiles)
+      profiles = jsp(profiles)
+    })
 const wekata = new KOA()
 wekata.use(ctx=>{
   if(ctx.url === '/favicon.ico') return
@@ -31,24 +40,16 @@ wekata.use(ctx=>{
       ctx.body = fs.createReadStream('./images/' + ctx.url, {autoClose: true})
     }
   }
+  if(ctx.url === '/fetch-profiles'){
+    console.log('fetched')
+    ctx.type = 'application/json'
+    ctx.body = profiles
+  }
   //VISITER UN PROFILE
   if(profileCheck.test(ctx.url)){
-    let profileRequest = profilCheck.exec(ctx.url)[1]
+    let profileRequest = profileCheck.exec(ctx.url)[1]
+    ctx.body = readDirCreateURLs(profileRequest)
     console.log(profileRequest)
-    let currentUserList =""
-    let currentUserStream = fs.createReadStream('./userslist.weson', {encoding: 'utf8'})
-    currentUserStream.on('data', data=>{
-      currentUserList += data
-    })
-    currentUserStream.on('end', ()=>{
-      currentUserList = jsp(currentUserList)
-      ctx.type = "application/json"
-      currentUserList.forEach(user =>{
-        if(user.firstName+'-'+user.lastName === profileRequest){
-          ctx.body = user
-        }
-      })
-    })
   }
 })
 
@@ -92,11 +93,12 @@ kataSocket.on('create-profile', (ctx)=>{
       let fullName = profileData.firstName+'-'+profileData.lastName
       let profilPic = 'avatar.'+ profileData.imgType
       saveAndCreate(fullName, {name: profilPic, buffer: profileData.profilPic})
+      profiles.push(user)
     }
   })
 })
 kataSocket.on('add-image', ctx => {
-  let picData = jsp(ctx.data)
+  let picData = ctx.data
   /* picData = {
     fullname: "full-name",
     name: "name",
@@ -119,7 +121,7 @@ const saveAndCreate = (name, image)=>{
 const readDirCreateURLs = (name)=>{
   if(fs.existsSync('./images/' + name)){
     let profileImagesURLS = fs.readdirSync('./images/'+ name).map(image =>{
-      return './images/'+name+'/'+image
+      return './'+name+'/'+image
     })
     return profileImagesURLS
   }else{
