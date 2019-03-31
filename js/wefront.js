@@ -182,7 +182,7 @@ const visitProfil = {
   view: ()=>{
     return x('div.visit', [
       state.visitCollection !== undefined ? state.visitCollection.map(url=>{
-        return x('img', {src: url})
+        return x('img', {src: url, class:'from-collection'})
       }) : null
     ])
   }
