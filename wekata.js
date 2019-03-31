@@ -52,7 +52,7 @@ wekata.use(ctx=>{
   }
 })
 
-kataSocket.on('connection', (socket)=>{
+kataSocket.on('connection', (ctx)=>{
   console.log('socket connected')
 })
 
@@ -79,7 +79,7 @@ kataSocket.on('create-profile', (ctx)=>{
     }
     if(y !== 0){
       console.log('le profil extist')
-      kataSocket.emit('error-msg', 'le profile existe')
+      ctx.socket.emit('error-msg', 'le profile existe')
     }else{
       currentUserList.push(profileData)
       const updateList = fs.createWriteStream('./userslist.weson', {encoding: 'utf8'})
@@ -120,7 +120,7 @@ const readDirCreateURLs = (name)=>{
     })
     return profileImagesURLS
   }else{
-    //kataSocket.emit('error-msg')?
+    //ctx.socket.emit('error-msg')?
     return {profileError: "this profile does not exist."}
   }
 }
