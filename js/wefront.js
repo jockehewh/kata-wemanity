@@ -74,6 +74,9 @@ const hasProfile = {
   view: ()=>{
     return x('div.profile', null, [
       x(profileHeader),
+      state.visitCollection !== undefined ? x(visitProfil, {a: (()=>{
+        document.querySelector('.collection').style.display = "none";
+        })()}): null,
       state.myCollection !== undefined ? x(profileCollection) : null
     ])
   }
@@ -140,14 +143,23 @@ const profileRequest = {
   },
   view: ()=>{
     return x('div.profile-request', null, [
-      x('form', null, [
+      x('form', {onsubmit: (e)=>{
+        e.preventDefault();
+        x.request({
+        method: 'GET',
+        url: '/profile/'+e.target.requested[e.target.requested.selectedIndex].value,
+        withCredentials: true
+      }).then(result =>{
+        state.visitCollection = result
+      })
+      }}, [
         x('label', 'visit another profile: '),
         x('select', {name: 'requested', class:'requested'}, [
           state.existingProfiles.map(profile=>{
             return x('option', {value: profile.firstName+'-'+profile.lastName}, profile.firstName+'-'+profile.lastName)
           })
         ]),
-        x('input[type=submit]', null, 'Create profile')
+        x('input[type=submit]', {value: "visit"}, 'visit profile')
       ])
     ])
   }
@@ -155,10 +167,23 @@ const profileRequest = {
 
 const profileCollection = {
   view:()=>{
-    return x('div.my-collection', null, [
+    return x('div.collection', null, [
       state.myCollection.map(img=>{
         return x('img', {src: img, class:'from-collection'})
-      })
+      }), 
+    ])
+  }
+}
+
+const visitProfil = {
+  oninit:()=>{
+
+  },
+  view: ()=>{
+    return x('div.visit', [
+      state.visitCollection !== undefined ? state.visitCollection.map(url=>{
+        return x('img', {src: url})
+      }) : null
     ])
   }
 }
