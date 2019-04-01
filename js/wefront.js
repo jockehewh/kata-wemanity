@@ -1,26 +1,36 @@
-const jss = JSON.stringify
-const jsp = JSON.parse
-const x = m
-const mews = io('ws://localhost:2019/katasocket')
+const jss = JSON.stringify //jss est un raccourci vers méthode JSON.stringify.
+
+const jsp = JSON.parse //jsp est un raccourci vers méthode JSON.parse.
+
+const x = m // réassignation de "m" (Mithril) vers "x" pour le coté pratique parce que autrement VSCode autocomplete le "m" en "matchmedia"
+
+const mews = io('ws://localhost:2019/katasocket') // la variable "mews" est un "webSocket", pour cet exercice j'utilise la librairie Socket.io parce qu'elle gère les deconnexions et le reconnexions
+/* 
+  Vérification de présence de la clé 'profile' dans le localStorage
+*/
 if(localStorage.profile === undefined){
   localStorage.profile = false
-}
+} 
+/* 
+  Création du state
+  un objet global qui référence les variables utilisées par l'application
+*/
 const state = {
   hasProfile: localStorage.profile,
 }
-/* profileData = {
-    firstName: "name",
-    lastName: "lastname",
-    profilPic: "buffer",
-    imgType: ""
-  } */
-  /* picData = {
-    fullname: "full-name",
-    name: "name",
-    buffer: "buffer"
-  } */
 
 const checkAndCreateProfile = (form)=>{
+  /* 
+    Fonction créatrice de profile d'utilisateur
+    cette fonction prend en parametre le formulaire de création d'utilisateur.
+    la fonction de cette fonction est de vérifié que les champs nécéssaire à la creation d'un profile d'utilisateur soient bien présents et non nuls.
+
+    une fois vérifiées, la fonction crée un objet contenant ces valeur et les envois au serveur à traver le webSocket.
+    alors ils sont sauvegardés sous la forme d'un objet dans le localStorage.
+    cette objet contient (prénom, nom et url de la photo de profile).
+    la sauvegarde dans le localStorage facilite une utilisation ultérieur du profile si l'utilisateur utilise le même appareil.
+    si le profile existe deja une erreur est générer coté serveur.
+  */
   if(form.firstname.value === undefined || form.lastname.value === undefined || form.profilePic.files.length === 0){
     console.log('missing data')
   }else{
@@ -40,6 +50,12 @@ const checkAndCreateProfile = (form)=>{
 }
 
 const hasNoProfile = {
+  /* 
+    le composant hasNoProfile est un formulaire qui permet à l'utilisateur de créer son profile
+    il se compose de trois éléments le prénom (firstName), le nom de famille (lastName) et d'une photo de profile (profilPic).
+    lorsque le formulaire est envoyé, la fonction "checkAndCreateProfile", qui est responsable de la vérification de la présence des données, est appelé apres avoir
+    annulé le comportement par défault de l'évènement soumission de formulaire qui rafraichit automatiquement la page.
+  */
   view: ()=>{
     return x('div.welcome',null, [
       x('h2',null, 'Welcome'),
@@ -69,6 +85,9 @@ const hasNoProfile = {
 }
 
 const hasProfile = {
+  /* 
+    le composant hasProfile est un conteneur qui à pour seul fonctionctionalité de contenir deux autres composant ("profileHeader" et "profileCollection") qui composent un profile.
+  */
   oninit: ()=>{
   },
   view: ()=>{
@@ -83,6 +102,14 @@ const hasProfile = {
 }
 
 const profileHeader = {
+  /* 
+    le composant profileHeader est responsable de mettre en forme les informations utilisateur qui sont son prénom, son nom de famille et sa photo de profile en
+    les affichants en haut de la page.
+    ce composant contien lui aussi deux composants 
+    ("addImageToCollection") qui permet à l'utilisateur d'alimenter sa collection d'images.
+    ("profileRequest") donne la possibilité de visiter un autre profile
+    ce composant est aussi responsable de récuprer la liste d'url des images de l'utilisateur auprès du serveur.
+  */
   oninit: ()=>{
     state.profileData = jsp(localStorage.profileInfo)
     x.request({
@@ -115,6 +142,11 @@ const profileHeader = {
 }
 
 const addImageToCollection = {
+  /* 
+    ce composant à pour fonctionnalité l'ajout d'image(s) à la collection personnelle de l'utilisateur.
+    il se compose d'un selecteur de fichier qui lors d'un changement 
+    envois les fichiers un par un à travers le webSocket.
+  */
   view: ()=>{
     return x('input[type=file]', {accept: 'image/*', multiple: true, onchange: (e)=>{
       if(e.target.files.length !== 0){
@@ -139,6 +171,11 @@ const addImageToCollection = {
 }
 
 const profileRequest = {
+  /* 
+    Ce composant est composé d'un selecteur d'option. chaque option est reçu depuis le serveur.
+    Le bouton valider prend en compte l'option sélectionné et l'utilise pour créer une requete vers le serveur qui repertorie les utilisateurs par leur nom complet, c'est-à-dire un prénom et un nom de famille.
+    Le serveur répond avec une liste d'url. Cette liste sera utilité par le composant "visitProfil"
+  */
   oninit: ()=>{
   },
   view: ()=>{
@@ -166,6 +203,10 @@ const profileRequest = {
 }
 
 const profileCollection = {
+  /* 
+    ce composant affiche les images récupérées sous forme d'url par le composant "profileHeader" au démarage de l'application et crée une image pour chaque url puis l'ajoute de façon visible à la page.
+    après, c'est le composant "addImageToCollection" qui est responsable de récupérer ces url.
+  */
   view:()=>{
     return x('div.collection', null, [
       state.myCollection.map(img=>{
@@ -176,6 +217,9 @@ const profileCollection = {
 }
 
 const visitProfil = {
+  /* 
+    ce compsosant se comporte exactement comme le composant "profileCollection" à la difference que les url sont récupérée par le compososant profileRequest après validation.
+  */
   oninit:()=>{
 
   },
@@ -189,6 +233,10 @@ const visitProfil = {
 }
 
 let theHomepage = {
+  /* 
+    ce composant est responsable de la mise-en-page générale. si l'utilisateur n'as pas de profile il affichera le composant "hasNoProfile".
+    si l'utilisateur à un profile, il affichera le compsant "hasProfile".
+  */
   oninit: ()=>{
     state.hasProfile = localStorage.profile
   },
