@@ -4,7 +4,7 @@
   "description": "an images gallery app",
   "main": "wekata.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node wekata.js"
   },
   "repository": {
     "type": "git",
